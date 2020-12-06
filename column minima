@@ -1,0 +1,228 @@
+#include<bits/stdc++.h>
+using namespace std;
+
+class COLMINIMA{
+   public:
+      int flag = 0, sum = 0;
+      int ns,nd;
+   //Constructor
+   COLMINIMA(){
+      cout<<"Enter the number of supply constraints: ";
+      cin>>ns;
+      cout<<"Enter the number of deamnd constraints: ";
+      cin>>nd;
+   }
+
+   string vec[10][10],final_matrix[10][10];
+   int final_matrix1[10][10];
+   vector<vector<int>>final_cal;
+
+   //input
+   void enter(){
+      for(int i=0;i<ns;i++){
+         for(int j=0;j<nd;j++){
+            cout<<"("<<i+1<<","<<j+1<<") ";
+            cin>>vec[i][j];
+         }
+      }
+      
+      cout<<"Enter the supplies: ";
+      for(int i=0;i<ns;i++){
+         cin>>vec[i][nd];
+      }
+      
+      cout<<"Enter demands: ";
+      for(int i=0;i<nd;i++){
+         cin>>vec[ns][i];
+      }
+      
+      lastelement();  
+   }
+
+
+   void lastelement(){
+      int s1=0,s2=0;
+      for(int i=0;i<ns+1;i++){
+         for(int j=0;j<nd+1;j++){
+            if(j==nd){
+            s1=s1+std::atoi(vec[i][j].c_str());
+            }
+            if(i==ns){
+            s2=s2+std::atoi(vec[i][j].c_str());
+            }
+            //checking demand == supply
+            if(i==ns && j==nd){
+               if(s1==s2)
+                  vec[i][j]="";
+               else{
+                  flag=1;
+                  break;
+               }
+            }
+         }
+      }
+      
+      if(flag==0){
+         for(int i=0;i<ns+1;i++){
+            for(int j=0;j<nd+1;j++){
+            final_matrix[i][j]=vec[i][j];
+            final_matrix1[i][j]=std::atoi(vec[i][j].c_str());
+            }
+         }
+         cout<<"\n\tTable is balanced\n\n";
+         string initialmatrix[10][10];
+         for(int i=0;i<ns+1;i++){
+            for(int j=0;j<nd+1;j++){
+               initialmatrix[i][j]=vec[i][j];
+            }
+         }
+         display(initialmatrix);//now furthur changes will be there in intermediate matrix
+         col_minima(initialmatrix);
+      }
+      else
+         cout<<"\n\tTable is unbalanced\n";
+   }
+
+
+   void col_minima(string intermediate[][10]){
+      int temp;
+      int st = 0;
+      if(flag == 0){
+         cout<<"\nFinding the intermediate Basic Feasible Solution by COLUMN MINIMA Method\n";
+         for(int i = 0; i < nd; i++){
+            string demand = intermediate[ns][i];
+            while (demand != "--"){
+               int minima = INT_MAX;
+               for(int j = 0; j < ns; j++){
+                  if(intermediate[j][i].find('(')>intermediate[j][i].length() && std::atoi(intermediate[j][i].c_str())<minima && intermediate[j][nd] != "--"){
+                     minima = std::atoi(intermediate[j][i].c_str());
+                     temp = j;
+                  }
+               }
+               if(std::atoi(intermediate[ns][i].c_str())<std::atoi(intermediate[temp][nd].c_str())){
+                  sum=sum+(std::atoi(intermediate[temp][i].c_str())*std::atoi(intermediate[ns][i].c_str()));
+                  intermediate[temp][i]=intermediate[ns][i]+"("+intermediate[temp][i]+")";
+                  if(std::atoi(intermediate[temp][nd].c_str())-std::atoi(intermediate[ns][i].c_str())>0){
+                     intermediate[temp][nd]=to_string(std::atoi(intermediate[temp][nd].c_str())-std::atoi(intermediate[ns][i].c_str()));
+                  }
+                  else{
+                     intermediate[temp][nd]="--";
+                  }
+                  intermediate[ns][i] = "--";
+               }else{
+                  sum=sum+(std::atoi(intermediate[temp][i].c_str())*std::atoi(intermediate[temp][nd].c_str()));
+                  intermediate[temp][i]=intermediate[temp][nd]+"("+intermediate[temp][i]+")";
+                  if(std::atoi(intermediate[ns][i].c_str())-std::atoi(intermediate[temp][nd].c_str())>0){
+                     intermediate[ns][i]=to_string(std::atoi(intermediate[ns][i].c_str())-std::atoi(intermediate[temp][nd].c_str()));
+                  }
+                  else{
+                     intermediate[ns][i]= "--";
+                  }
+                  intermediate[temp][nd] = "--";
+               }
+               demand = intermediate[ns][i];
+               cout<<"-----------------------------------------------------------------\n";
+               cout<<"Step "<<++st<<": "<<endl;
+               display(intermediate);// display the matrix in iteration
+            }
+         }
+         total_cost(intermediate);
+      }
+   }
+
+
+   void total_cost(string final_matrix[][10]){
+      string mat;
+      int count=0;
+      cout<<"\n----------------------------------------------------------------------";
+                  
+      cout<<"\ninitial Feasible Basic Solution is\n\n";
+                  
+                  
+      display(final_matrix);// final matrix to be displayed  
+
+      for(int i=0;i<ns;i++){
+         for(int j=0;j<nd;j++){
+            if(final_matrix[i][j]!="--" && final_matrix[i][j].find('(')<final_matrix[i][j].length()){
+               count++;
+               if(i==0 && j==0){
+                  mat=final_matrix[i][j];
+               }
+               else{
+                  mat=mat+" + "+final_matrix[i][j];
+               }
+            }
+         }
+      } 
+                  
+      mat=mat.substr(0, mat.size()); 
+      cout<<"\n\tThe minimum total transportation cost is : ";
+   
+      std::replace(mat.begin(),mat.end(),'(','*');
+      std::replace(mat.begin(),mat.end(),')',' ');
+      cout<<"\t"<<mat;   
+      cout<<" = "<<sum<<endl;
+               
+      if(count==(ns+nd-1)){
+         cout<<"\n\tHere, the number of allocated cells = "<<count<<" is equal to number of supplies + number of demands - 1 = "<<ns<<" + "<<nd<<" - 1 = "<<ns+nd-1<<endl;
+         cout<<"\tThis solution is not optimal\n";
+      }
+      else{
+         cout<<"\tThis solution is optimal\n";
+      }
+      cout<<endl;    
+   }
+
+
+   void display(string ans[10][10]){
+      cout<<"\tRoute\t";
+      int ch=1,ch1=1;
+      for(int i=0;i<nd+1;i++){
+         if(i<nd)
+            cout<<"D"<<ch1<<"\t";
+         else
+            cout<<"Supply\t\n";
+         ch1++; 
+      }
+      for(int i=0;i<ns+1;i++){
+         if(i<ns)
+            cout<<"\t"<<"S"<<ch<<"\t";
+         else
+            cout<<"\tDemand\t";
+         for(int j=0;j<nd+1;j++){      
+            cout<<ans[i][j]<<"\t";
+         }
+         ch++;
+         cout<<endl;
+      }
+         
+      cout<<endl;
+   }
+};
+
+int main(){
+   COLMINIMA s; 
+   s.enter();
+
+   return 0;
+}
+
+
+/*
+3
+4
+16
+18
+21
+12
+17
+19
+14
+13
+32
+11
+15
+10
+150 160 90
+140 120 90 50
+*/
